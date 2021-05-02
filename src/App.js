@@ -8,25 +8,39 @@ import {
   faUtensilSpoon,
 } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
-
+import { BarLoader } from 'react-spinners';
 import axios from 'axios';
+
 // Header imports
+import { css } from '@emotion/core';
+const override = css`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+`;
 
 function App() {
   const [searchQuery, setSearchQuery] = useState({
     query: '',
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [recipesLoading, setRecipesLoading] = useState(true);
   const [retrievedRecipes, setRetrievedRecipes] = useState();
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [selectedRecipeLoading, setSelectedRecipeLoading] = useState(true);
   const [recipeInformation, setRecipeInformation] = useState({});
+
   const handleInput = (e) => {
     setSearchQuery({ query: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    setRecipesLoading(true);
+    setSelectedRecipe(null);
+    console.log(`retrievedRecipes`, retrievedRecipes);
+    setRetrievedRecipes({});
     if (searchQuery.query !== '') {
       axios
         .get(
@@ -35,6 +49,7 @@ function App() {
         .then((res) => {
           const recipeResponse = res.data;
           setRetrievedRecipes(recipeResponse);
+          setRecipesLoading(false);
         });
       setSearchTerm(searchQuery.query);
       setSearchQuery({ query: '' });
@@ -42,6 +57,7 @@ function App() {
   };
 
   const handleClick = (id) => {
+    setSelectedRecipeLoading(true);
     setSelectedRecipe(id);
   };
 
@@ -50,8 +66,11 @@ function App() {
     setSelectedRecipe(null);
     setRecipeInformation({});
   };
+
   useEffect(() => {
-    console.log(`retrievedRecipes`, retrievedRecipes);
+    if (!retrievedRecipes) {
+      setRecipesLoading(true);
+    }
   }, [retrievedRecipes]);
 
   useEffect(() => {
@@ -63,10 +82,19 @@ function App() {
         .then((res) => {
           const recipeResponse = res.data;
           setRecipeInformation({ ...recipeResponse });
+          setSelectedRecipeLoading(false);
         });
     }
   }, [selectedRecipe]);
+
+  useEffect(() => {
+    if (!selectedRecipe) {
+      setSelectedRecipeLoading(true);
+    }
+  }, [selectedRecipe]);
+
   console.log(`recipeInformation`, recipeInformation);
+
   return (
     <div className='flex bg-hero-img bg-grey-50 bg-right-bottom bg-cover bg-no-repeat'>
       <Nav
@@ -77,6 +105,26 @@ function App() {
         home={home}
       />
       {retrievedRecipes === undefined && <Header searchQuery={searchQuery} />}
+
+      {retrievedRecipes !== undefined && (
+        <BarLoader
+          color='#34D399'
+          loading={recipesLoading}
+          height={8}
+          width={200}
+          css={override}
+        />
+      )}
+      {selectedRecipe && (
+        <BarLoader
+          color='#34D399'
+          loading={selectedRecipeLoading}
+          height={8}
+          width={200}
+          css={override}
+        />
+      )}
+
       {retrievedRecipes !== undefined && (
         <Main
           results={retrievedRecipes.results}
@@ -84,6 +132,7 @@ function App() {
           selectedRecipe={selectedRecipe}
           recipeInformation={recipeInformation}
           searchTerm={searchTerm}
+          selectedRecipeLoading={selectedRecipeLoading}
         />
       )}
       <Footer />
@@ -142,6 +191,8 @@ export const Main = ({
   selectedRecipe,
   recipeInformation,
   searchTerm,
+  recipesLoading,
+  selectedRecipeLoading,
 }) => {
   const [favorited, setFavorited] = useState(false);
 
@@ -151,10 +202,13 @@ export const Main = ({
 
   return (
     <main className='w-screen flex flex-col h-screen bg-transparent'>
-      <div className='container mt-48 mb-10 mx-auto h-auto sm:mt-auto sm:h-5/6  overflow-y-scroll scrollbar-thin scrollbar-thumb-green-400 scrollbar-track-green-50'>
-        <h2 className='text-xl text-green-50 pl-3'>
-          {results.length !== 0 && `Showing Results for: ${searchTerm}`}
-        </h2>
+      <div className='container mt-48 mb-10 mx-auto h-auto sm:mt-auto sm:h-5/6  overflow-y-auto scrollbar-thin scrollbar-thumb-green-400 scrollbar-track-green-50'>
+        {results && !selectedRecipe && (
+          <h2 className='text-xl text-green-50 pl-3 mb-2'>
+            {results.length !== 0 && `Showing Results for: ${searchTerm}`}
+          </h2>
+        )}
+
         {!selectedRecipe && (
           <RecipeList
             handleClick={handleClick}
@@ -162,7 +216,8 @@ export const Main = ({
             searchTerm={searchTerm}
           />
         )}
-        {selectedRecipe && (
+        {selectedRecipe && <BarLoader loading={selectedRecipeLoading} />}
+        {selectedRecipe && !selectedRecipeLoading && (
           <RecipeCard
             handleFavorited={handleFavorited}
             recipeInformation={recipeInformation}
@@ -186,28 +241,29 @@ export const Footer = () => {
 export const RecipeList = ({ results, handleClick, searchTerm }) => {
   return (
     <div className='recipe-list p-1 flex flex-wrap justify-center'>
-      {results.map((recipe) => {
-        const { id, image, title } = recipe;
-        return (
-          <div
-            onClick={() => {
-              handleClick(id);
-            }}
-            key={id}
-            className='recipe-card flex justify-center flex-col my-4  mx-4 p-2 bg-green-50 rounded-md md:flex-grow md:max-w-2xl cursor-pointer'
-          >
-            <img
-              className='recipe-card-img mx-auto rounded'
-              src={image}
-              alt={title}
-            />
-            <h4 className='recipe-card-title mt-2 text-l font-bold text-green-800'>
-              {title}
-            </h4>
-          </div>
-        );
-      })}
-      {results.length === 0 && (
+      {results !== undefined &&
+        results.map((recipe) => {
+          const { id, image, title } = recipe;
+          return (
+            <div
+              onClick={() => {
+                handleClick(id);
+              }}
+              key={id}
+              className='recipe-card flex justify-center flex-col max-w-xs my-4  mx-4 p-2 bg-green-50 rounded-md md:flex-grow md:max-w-2xl cursor-pointer'
+            >
+              <img
+                className='recipe-card-img mx-auto rounded'
+                src={image}
+                alt={title}
+              />
+              <h4 className='recipe-card-title mt-2 text-l font-bold text-green-800'>
+                {title}
+              </h4>
+            </div>
+          );
+        })}
+      {results !== undefined && results.length === 0 && (
         <span className='text-green-50 text-2xl mt-2 mx-auto px-2'>
           no results found for: <br />
           <span className='text-green-400'>"{searchTerm}"</span> <br /> Please
@@ -334,6 +390,7 @@ export const Search = ({ handleInput, handleSubmit, searchQuery }) => {
             placeholder='Find your next meal...'
             onChange={handleInput}
             value={searchQuery.query}
+            required
           />
         </div>
       </form>
