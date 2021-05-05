@@ -12,6 +12,7 @@ use:
 
 to create an index.scss file that the `npm build:css` script can compile to.
 
-Current progress: planning and setup
+You will need an api key stored in a .env file from the spoonacular api to run it.
 
-## TODO
+Current progress: Final version
+
