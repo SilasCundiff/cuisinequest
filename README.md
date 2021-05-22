@@ -18,15 +18,15 @@ You will need an api key stored in a .env file from the spoonacular api to run i
 example: REACT_APP_RECIPES_API_KEY={YOUR_API_KEY}
 
 ## Future Plans
-Add a user login system using firebase to provide additional functionality - With google oAuth!
-Improve the search functionality by including more complex search options such as flagging/tagging ingredients to blacklist/include
-Ability to favorite meals
-polish it, add attention to detail like micro animations, image optimization, etc
-Add offline mode and turn it into a PWA
+- Add a user login system using firebase to provide additional functionality - With google oAuth!
+- Improve the search functionality by including more complex search options such as flagging/tagging ingredients to blacklist/include
+- Ability to favorite meals
+- polish it, add attention to detail like micro animations, image optimization, etc
+- Add offline mode and turn it into a PWA
 
 ### extra credit
-meal planner
-shopping list
-cooking instructions
-in-built timers
-calories/carbs tracker
+- meal planner
+- shopping list
+- cooking instructions
+- in-built timers
+- calories/carbs tracker
